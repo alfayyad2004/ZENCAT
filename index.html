@@ -5,110 +5,121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zen Ginger Cat | Noise Management</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="nav.css?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <div id="app">
-        <div class="background-scene">
-            <div id="stars1"></div>
-            <div id="stars2"></div>
-            <div id="stars3"></div>
-            <div class="sunbeam" id="sunbeam"></div>
-            <div class="particles" id="particles"></div>
+
+    <body class="theme-cat">
+        <!-- Professional Navigation Overlay -->
+        <nav class="top-nav">
+            <div class="nav-group">
+                <a href="index.html" class="nav-link active">Guardians</a>
+                <a href="engage.html" class="nav-link">Space Quest</a>
+                <a href="math-race.html" class="nav-link">Math Race</a>
+                <a href="classic.html" class="nav-link">Classic</a>
+            </div>
+        </nav>
+
+        <div id="app">
+            <div class="background-scene">
+                <div id="stars1"></div>
+                <div id="stars2"></div>
+                <div id="stars3"></div>
+                <div class="sunbeam" id="sunbeam"></div>
+                <div class="particles" id="particles"></div>
+            </div>
+
+            <header>
+                <div class="logo-container">
+                    <div class="logo-icon">🌟</div>
+                    <div class="logo">Zen Guardians</div>
+                </div>
+
+                <div class="header-controls">
+                    <div class="star-counter" id="star-display">
+                        <span class="star-icon">★</span>
+                        <span id="star-count">0</span>
+                    </div>
+                    <button id="character-select-btn" class="icon-btn" title="Change Guardian">
+                        👥
+                    </button>
+                </div>
+            </header>
+
+            <main>
+                <div class="status-panel glass">
+                    <div class="timer-display" id="timer">00:00:00</div>
+
+                    <div class="noise-meter-container">
+                        <div class="noise-label">Noise Level</div>
+                        <div class="noise-bar-bg">
+                            <div class="noise-bar-fill" id="noise-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="sensitivity-control">
+                        <label for="sensitivity">Sensitivity</label>
+                        <input type="range" id="sensitivity" min="0" max="100" value="50">
+                    </div>
+                </div>
+
+                <div class="character-container">
+                    <div id="cat-svg-container">
+                        <!-- SVG will be injected here via JS -->
+                    </div>
+                    <div class="milestones-decor">
+                        <div id="pillow" class="decor-item hidden">
+                            <svg width="200" height="80" viewBox="0 0 200 80">
+                                <rect x="25" y="20" width="150" height="50" rx="25" fill="#ecf0f1" />
+                                <path d="M25,45 Q15,45 15,35 Q15,25 25,25" fill="#bdc3c7" />
+                                <path d="M175,45 Q185,45 185,35 Q185,25 175,25" fill="#bdc3c7" />
+                            </svg>
+                        </div>
+                        <div id="yarn" class="decor-item hidden">
+                            <svg width="60" height="60" viewBox="0 0 60 60">
+                                <circle cx="30" cy="30" r="25" fill="#e74c3c" />
+                                <path d="M15,15 Q30,5 45,15 M15,45 Q30,55 45,45 M10,30 Q30,30 50,30"
+                                    stroke="rgba(255,255,255,0.3)" fill="none" stroke-width="2" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-message" id="info-message">
+                    Tap anywhere to start the session & enable microphone
+                </div>
+
+                <!-- Character Select Modal -->
+                <div id="character-modal" class="modal hidden">
+                    <div class="modal-content glass">
+                        <div class="modal-header">
+                            <h2>Choose Your Guardian</h2>
+                            <button class="close-modal">&times;</button>
+                        </div>
+                        <div class="character-grid" id="character-grid">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <div class="progress-container glass">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill"></div>
+                </div>
+                <div class="milestone-markers">
+                    <div class="marker" data-time="60" title="1 min"></div>
+                    <div class="marker" data-time="300" title="5 mins"></div>
+                    <div class="marker" data-time="600" title="10 mins"></div>
+                    <div class="marker" data-time="1200" title="20 mins"></div>
+                </div>
+            </div>
         </div>
-
-        <header>
-            <div class="header-content">
-                <div class="logo">Zen Guardians</div>
-                <div class="star-counter" id="star-counter">
-                    <span class="star-icon">★</span>
-                    <span id="star-count">0</span>
-                </div>
-                <button id="character-select-btn" class="icon-btn" title="Change Guardian">
-                    👥
-                </button>
-                <div style="display: flex; gap: 5px; margin-left:10px;">
-                    <a href="classic.html" class="nav-btn">Classic</a>
-                    <a href="engage.html" class="nav-btn">RPG</a>
-                    <a href="math-race.html" class="nav-btn">Race</a>
-                </div>
-            </div>
-        </header>
-
-        <main>
-            <div class="status-panel glass">
-                <div class="timer-display" id="timer">00:00:00</div>
-
-                <div class="noise-meter-container">
-                    <div class="noise-label">Noise Level</div>
-                    <div class="noise-bar-bg">
-                        <div class="noise-bar-fill" id="noise-bar-fill"></div>
-                    </div>
-                </div>
-
-                <div class="sensitivity-control">
-                    <label for="sensitivity">Sensitivity</label>
-                    <input type="range" id="sensitivity" min="0" max="100" value="50">
-                </div>
-            </div>
-
-            <div class="character-container">
-                <div id="cat-svg-container">
-                    <!-- SVG will be injected here via JS -->
-                </div>
-                <div class="milestones-decor">
-                    <div id="pillow" class="decor-item hidden">
-                        <svg width="200" height="80" viewBox="0 0 200 80">
-                            <rect x="25" y="20" width="150" height="50" rx="25" fill="#ecf0f1" />
-                            <path d="M25,45 Q15,45 15,35 Q15,25 25,25" fill="#bdc3c7" />
-                            <path d="M175,45 Q185,45 185,35 Q185,25 175,25" fill="#bdc3c7" />
-                        </svg>
-                    </div>
-                    <div id="yarn" class="decor-item hidden">
-                        <svg width="60" height="60" viewBox="0 0 60 60">
-                            <circle cx="30" cy="30" r="25" fill="#e74c3c" />
-                            <path d="M15,15 Q30,5 45,15 M15,45 Q30,55 45,45 M10,30 Q30,30 50,30"
-                                stroke="rgba(255,255,255,0.3)" fill="none" stroke-width="2" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-message" id="info-message">
-                Tap anywhere to start the session & enable microphone
-            </div>
-
-            <!-- Character Select Modal -->
-            <div id="character-modal" class="modal hidden">
-                <div class="modal-content glass">
-                    <div class="modal-header">
-                        <h2>Choose Your Guardian</h2>
-                        <button class="close-modal">&times;</button>
-                    </div>
-                    <div class="character-grid" id="character-grid">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <div class="progress-container glass">
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progress-fill"></div>
-            </div>
-            <div class="milestone-markers">
-                <div class="marker" data-time="60" title="1 min"></div>
-                <div class="marker" data-time="300" title="5 mins"></div>
-                <div class="marker" data-time="600" title="10 mins"></div>
-                <div class="marker" data-time="1200" title="20 mins"></div>
-            </div>
-        </div>
-    </div>
-    <script src="app.js"></script>
-</body>
+        <script src="app.js"></script>
+    </body>
 
 </html>

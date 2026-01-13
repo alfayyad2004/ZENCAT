@@ -7,9 +7,18 @@
     <title>Antigravity Math Race</title>
     <link rel="stylesheet" href="math-race-style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="nav.css?v=2">
 </head>
 
 <body>
+    <nav class="top-nav">
+        <div class="nav-group">
+            <a href="index.html" class="nav-link">Guardians</a>
+            <a href="engage.html" class="nav-link">Space Quest</a>
+            <a href="math-race.html" class="nav-link active">Math Race</a>
+            <a href="classic.html" class="nav-link">Classic</a>
+        </div>
+    </nav>
     <div id="game-container">
         <!-- Split Screen Backgrounds -->
         <div class="split-screen left"></div>
@@ -36,6 +45,15 @@
 
         <!-- Teacher Controls -->
         <div id="teacher-controls">
+            <div id="setup-panel">
+                <label style="color: #aaa; font-size: 12px; display: block; margin-bottom: 10px;">SELECT LEVEL</label>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;">
+                    <button class="diff-btn" onclick="setDifficulty('easy')">STD 1</button>
+                    <button class="diff-btn active" onclick="setDifficulty('medium')">STD 2</button>
+                    <button class="diff-btn" onclick="setDifficulty('hard')">STD 3</button>
+                </div>
+            </div>
+
             <div id="options-container" class="hidden">
                 <button class="option-btn" onclick="selectAnswer(0)">A: 12</button>
                 <button class="option-btn" onclick="selectAnswer(1)">B: 14</button>
@@ -56,9 +74,6 @@
         </div>
     </div>
 
-    <div class="nav-back">
-        <a href="index.html">EXIT RACE</a>
-    </div>
 
     <script src="math-race-app.js"></script>
 </body>

@@ -172,16 +172,53 @@ main {
 }
 
 .header-content {
+    /* Legacy support if needed, otherwise replaced by below */
+    display: none;
+}
+
+/* New Header Structure */
+header {
+    width: 100%;
+    max-width: 1000px;
+    z-index: 10;
     display: flex;
     justify-content: space-between;
+    /* Spread logo and controls */
+    align-items: flex-start;
+    padding: 1.5rem 2rem;
+}
+
+.logo-container {
+    display: flex;
     align-items: center;
-    width: 100%;
-    max-width: 800px;
-    padding: 1rem 2rem;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(10px);
-    border-radius: 0 0 20px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 20px;
+    border-radius: 50px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo-icon {
+    font-size: 1.8rem;
+    animation: bounce 2s infinite;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    /* Pushed down slightly to not conflict with top-nav if needed */
+    margin-top: 50px;
+}
+
+@media (min-width: 768px) {
+    .header-controls {
+        margin-top: 0;
+        /* On desktop, side-by-side matches nav */
+        padding-right: 120px;
+        /* Space for fixed nav */
+    }
 }
 
 .star-counter {

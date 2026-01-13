@@ -56,6 +56,35 @@ const startScreen = document.getElementById('start-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
 const sensitivityInput = document.getElementById('sensitivity');
 
+// simple synth for sound fx
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    if (type === 'boost') {
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.linearRampToValueAtTime(300, now + 0.5);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+    } else if (type === 'hit') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.exponentialRampToValueAtTime(20, now + 0.3);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+    }
+}
+
 // Init
 function init() {
     canvas.width = 800;
@@ -66,6 +95,11 @@ function init() {
 
     startScreen.addEventListener('click', startGame);
     gameOverScreen.addEventListener('click', resetGame);
+
+    // Resume audio context on click
+    window.addEventListener('click', () => {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }, { once: true });
 
     requestAnimationFrame(gameLoop);
 }
@@ -133,6 +167,7 @@ function update() {
     if (noiseLevel < noiseThreshold) {
         // Quiet: Boost
         fuel = Math.min(fuel + 0.1, 100);
+        if (Math.random() < 0.05) playSound('boost'); // Random engine pulse
         speed = Math.min(speed + 0.1, 10); // Max speed 10
         createParticle(rocket.x, rocket.y + rocket.height / 2, 'exhaust');
     } else {
@@ -225,6 +260,7 @@ function update() {
         if (checkCollision(rocket, { x: o.x, y: o.y, width: o.size, height: o.size })) {
             fuel -= 10;
             speed *= 0.5; // Hit slows you down
+            playSound('hit');
             canvas.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`; // Hard shake
             createExplosion(o.x, o.y);
             // Remove asteroid
