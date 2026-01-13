@@ -84,8 +84,15 @@ class ZenGuardians {
     }
 
     init() {
+        console.log("Initializing ZenGuardians...");
         this.loadData();
         this.setupEventListeners();
+
+        if (!this.el.catContainer) {
+            console.error("FATAL: .character-container or #cat-svg-container not found!");
+            alert("Error: Character Container missing from page.");
+        }
+
         this.renderCharacter();
         this.updateStarDisplay();
         this.updateTheme();
@@ -93,8 +100,10 @@ class ZenGuardians {
 
         // Initial background
         const char = this.getCharacter(this.activeCharId);
-        this.el.background.style.backgroundImage = `url('${char.assets.bg}')`;
-        this.el.background.classList.add('dynamic-bg');
+        if (char && char.assets.bg) {
+            this.el.background.style.backgroundImage = `url('${char.assets.bg}')`;
+            this.el.background.classList.add('dynamic-bg');
+        }
     }
 
     getCharacter(id) {
@@ -102,10 +111,12 @@ class ZenGuardians {
     }
 
     setupEventListeners() {
-        this.el.sensitivity.addEventListener('input', () => {
-            const val = parseInt(this.el.sensitivity.value);
-            this.noiseThreshold = (100 - val) / 100 * 255;
-        });
+        if (this.el.sensitivity) {
+            this.el.sensitivity.addEventListener('input', () => {
+                const val = parseInt(this.el.sensitivity.value);
+                this.noiseThreshold = (100 - val) / 100 * 255;
+            });
+        }
 
         // Start Audio on click
         document.body.addEventListener('click', () => {
@@ -115,19 +126,24 @@ class ZenGuardians {
         });
 
         // Modal
-        this.el.characterSelectBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.openModal();
-        });
+        if (this.el.characterSelectBtn) {
+            this.el.characterSelectBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openModal();
+            });
+        }
 
-        this.el.closeModal.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.closeModal();
-        });
+        if (this.el.closeModal) {
+            this.el.closeModal.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.closeModal();
+            });
+        }
     }
 
     async startSession() {
         try {
+            console.log("Requesting Mic...");
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true
             });
@@ -141,11 +157,12 @@ class ZenGuardians {
             this.isRunning = true;
             this.startTime = Date.now();
             this.el.infoMessage.textContent = "Keep it quiet to earn stars!";
+            console.log("Audio Started.");
 
             this.startLoop();
         } catch (err) {
             console.error("Mic denied:", err);
-            this.el.infoMessage.textContent = "Microphone access is needed.";
+            this.el.infoMessage.textContent = "Microphone access is needed to play.";
         }
     }
 
@@ -163,6 +180,7 @@ class ZenGuardians {
     }
 
     updateTimer() {
+        if (!this.el.timer) return;
         const now = Date.now();
         const diff = Math.floor((now - this.startTime) / 1000);
         this.elapsedTime = diff;
@@ -174,6 +192,7 @@ class ZenGuardians {
     }
 
     monitorNoise() {
+        if (!this.analyser) return;
         this.analyser.getByteFrequencyData(this.dataArray);
         let sum = 0;
         for (let i = 0; i < this.dataArray.length; i++) sum += this.dataArray[i];
@@ -181,7 +200,7 @@ class ZenGuardians {
 
         // Visual Noise Bar
         const percentage = Math.min((average / 255) * 100 * 3, 100); // Amplify for visibility
-        this.el.noiseBarFill.style.width = `${percentage}%`;
+        if (this.el.noiseBarFill) this.el.noiseBarFill.style.width = `${percentage}%`;
 
         // Logic
         if (average > this.noiseThreshold * 1.5) {
@@ -254,38 +273,54 @@ class ZenGuardians {
         float.style.fontWeight = 'bold';
         float.style.left = '50%';
         float.style.top = '20%';
+        float.style.zIndex = '200';
+        float.style.textShadow = '0 0 5px black';
         float.style.animation = 'float-up 1s ease-out forwards';
         document.body.appendChild(float);
         setTimeout(() => float.remove(), 1000);
     }
 
     renderCharacter() {
+        console.log(`Rendering Character: ID=${this.activeCharId}, State=${this.state}`);
         const char = this.getCharacter(this.activeCharId);
+        if (!char) {
+            console.error("Character not found!", this.activeCharId);
+            return;
+        }
         const asset = char.assets[this.state];
+        console.log("Using asset:", asset);
 
         const html = `
-            <div class="cat-wrapper" id="cat-wrapper">
-                <img id="cat-character" src="${asset}" alt="${char.name} ${this.state}" class="${this.state === 'sleep' ? 'breathing' : ''}">
+            <div class="cat-wrapper" id="cat-wrapper" style="display:flex; justify-content:center; align-items:center;">
+                <img id="cat-character" src="${asset}" alt="${char.name} ${this.state}" class="${this.state === 'sleep' ? 'breathing' : ''}" onerror="console.error('Failed to load image:', this.src)">
             </div>
         `;
-        this.el.catContainer.innerHTML = html;
+
+        if (this.el.catContainer) {
+            this.el.catContainer.innerHTML = html;
+        } else {
+            console.error("Cat Container is null in renderCharacter");
+        }
 
         // Apply shaking effect if angry
         const img = document.getElementById('cat-character');
-        if (this.state === 'angry') {
+        if (img && this.state === 'angry') {
             img.style.animation = 'shake 0.5s infinite';
         }
     }
 
     updateTheme() {
         const char = this.getCharacter(this.activeCharId);
-        document.body.className = char.theme;
-        this.el.background.style.backgroundImage = `url('${char.assets.bg}')`;
+        if (char) {
+            document.body.className = char.theme;
+            this.el.background.style.backgroundImage = `url('${char.assets.bg}')`;
+        }
     }
 
     // --- Modal & Grid ---
 
     renderCharacterGrid() {
+        if (!this.el.characterGrid) return;
         this.el.characterGrid.innerHTML = '';
         this.characters.forEach(c => {
             const card = document.createElement('div');
@@ -331,16 +366,18 @@ class ZenGuardians {
     }
 
     openModal() {
-        this.el.modal.classList.remove('hidden');
-        this.renderCharacterGrid();
+        if (this.el.modal) {
+            this.el.modal.classList.remove('hidden');
+            this.renderCharacterGrid();
+        }
     }
 
     closeModal() {
-        this.el.modal.classList.add('hidden');
+        if (this.el.modal) this.el.modal.classList.add('hidden');
     }
 
     updateStarDisplay() {
-        this.el.starCount.textContent = this.stars;
+        if (this.el.starCount) this.el.starCount.textContent = this.stars;
     }
 
     // --- Persistence ---
@@ -357,15 +394,27 @@ class ZenGuardians {
     loadData() {
         const json = localStorage.getItem('zenGuardiansData');
         if (json) {
-            const data = JSON.parse(json);
-            this.stars = data.stars || 0;
-            this.activeCharId = data.activeCharId || 'cat';
+            try {
+                const data = JSON.parse(json);
+                this.stars = data.stars || 0;
 
-            if (data.unlocked) {
-                data.unlocked.forEach(id => {
-                    const char = this.getCharacter(id);
-                    if (char) char.unlocked = true;
-                });
+                // Validate activeCharId
+                if (data.activeCharId && this.getCharacter(data.activeCharId)) {
+                    this.activeCharId = data.activeCharId;
+                } else {
+                    console.warn("Invalid activeCharId in save, resetting to cat");
+                    this.activeCharId = 'cat';
+                }
+
+                if (data.unlocked) {
+                    data.unlocked.forEach(id => {
+                        const char = this.getCharacter(id);
+                        if (char) char.unlocked = true;
+                    });
+                }
+            } catch (e) {
+                console.error("Corrupt save data", e);
+                this.activeCharId = 'cat';
             }
         }
     }
