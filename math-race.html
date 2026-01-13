@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Math Race</title>
+    <link rel="stylesheet" href="math-race-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="game-container">
+        <!-- Split Screen Backgrounds -->
+        <div class="split-screen left"></div>
+        <div class="split-screen right"></div>
+
+        <!-- Finish Lines -->
+        <img src="pixel-finish-line.png" class="finish-line" id="finish-left">
+        <img src="pixel-finish-line.png" class="finish-line" id="finish-right">
+
+        <!-- Characters -->
+        <div class="racer-container" id="racer-left" style="bottom: 20px;">
+            <img src="pixel-rocket.png" class="racer-sprite">
+            <div class="team-label">TEAM A</div>
+        </div>
+        <div class="racer-container" id="racer-right" style="bottom: 20px;">
+            <img src="pixel-ufo.png" class="racer-sprite ufo">
+            <div class="team-label">TEAM B</div>
+        </div>
+
+        <!-- Central Question Board -->
+        <div id="question-board">
+            <div id="question-text">READY?</div>
+        </div>
+
+        <!-- Teacher Controls -->
+        <div id="teacher-controls">
+            <div id="options-container" class="hidden">
+                <button class="option-btn" onclick="selectAnswer(0)">A: 12</button>
+                <button class="option-btn" onclick="selectAnswer(1)">B: 14</button>
+                <button class="option-btn" onclick="selectAnswer(2)">C: 8</button>
+            </div>
+            <button id="start-btn" onclick="startRace()">START RACE</button>
+            <div id="team-selector" class="hidden">
+                <p>WHO ANSWERED?</p>
+                <button class="team-btn team-a" onclick="awardPoint('A')">TEAM A (LEFT)</button>
+                <button class="team-btn team-b" onclick="awardPoint('B')">TEAM B (RIGHT)</button>
+            </div>
+        </div>
+
+        <!-- Victory Overlay -->
+        <div id="victory-screen" class="hidden">
+            <h1 id="winner-text">TEAM A WINS!</h1>
+            <button onclick="location.reload()">REMATCH</button>
+        </div>
+    </div>
+
+    <div class="nav-back">
+        <a href="index.html">EXIT RACE</a>
+    </div>
+
+    <script src="math-race-app.js"></script>
+</body>
+
+</html>

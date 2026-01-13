@@ -1,371 +1,396 @@
 /**
- * Zen Ginger Cat - Noise Management Tool
- * Core Logic: Audio Analysis, Timer, and Milestone System
+ * Zen Guardians - Classroom Noise Management
+ * Core Logic: Audio Analysis, Multi-Character System, Economy
  */
 
-class ZenGingerCat {
+class ZenGuardians {
     constructor() {
+        // App State
+        this.characters = [{
+            id: 'cat',
+            name: 'Ginger',
+            cost: 0,
+            unlocked: true,
+            theme: 'theme-cat',
+            assets: {
+                sleep: 'cat-sleeping.png',
+                alert: 'cat-alert.png',
+                angry: 'cat-angry.png',
+                bg: 'bg-livingroom.png'
+            }
+        },
+        {
+            id: 'owl',
+            name: 'Prof. Hoot',
+            cost: 50,
+            unlocked: false,
+            theme: 'theme-owl',
+            assets: {
+                sleep: 'owl-sleeping.png',
+                alert: 'owl-alert.png',
+                angry: 'owl-angry.png',
+                bg: 'bg-forest.png'
+            }
+        },
+        {
+            id: 'dragon',
+            name: 'Sparky',
+            cost: 150,
+            unlocked: false,
+            theme: 'theme-dragon',
+            assets: {
+                sleep: 'dragon-sleeping.png',
+                alert: 'dragon-alert.png',
+                angry: 'dragon-angry.png',
+                bg: 'bg-cave.png'
+            }
+        }
+        ];
+
+        this.activeCharId = 'cat';
+        this.stars = 0;
+        this.isRunning = false;
+        this.startTime = 0;
+        this.elapsedTime = 0; // Current session duration
+        this.quietTime = 0; // Continuous quiet time for earning stars
+
+        // Audio
         this.audioContext = null;
         this.analyser = null;
         this.microphone = null;
         this.dataArray = null;
-
-        this.isRunning = false;
-        this.startTime = 0;
-        this.elapsedTime = 0;
         this.noiseThreshold = 50;
+        this.lastNoiseLevel = 0;
+        this.state = 'sleep'; // sleep, alert, angry
+        this.disturbedTimeout = null;
 
-        this.timerInterval = null;
-        this.animationId = null;
-
-        this.milestones = [
-            { time: 60, reached: false, id: 'pillow' },
-            { time: 300, reached: false, id: 'sunbeam' },
-            { time: 600, reached: false, id: 'yarn' },
-            { time: 1200, reached: false, id: 'aura' }
-        ];
-
-        this.elements = {
+        // Elements
+        this.el = {
             timer: document.getElementById('timer'),
             sensitivity: document.getElementById('sensitivity'),
             progressFill: document.getElementById('progress-fill'),
             infoMessage: document.getElementById('info-message'),
             catContainer: document.getElementById('cat-svg-container'),
-            sunbeam: document.getElementById('sunbeam'),
-            pillow: document.getElementById('pillow'),
-            yarn: document.getElementById('yarn')
+            starCount: document.getElementById('star-count'),
+            characterSelectBtn: document.getElementById('character-select-btn'),
+            modal: document.getElementById('character-modal'),
+            characterGrid: document.getElementById('character-grid'),
+            closeModal: document.querySelector('.close-modal'),
+            noiseBarFill: document.getElementById('noise-bar-fill'),
+            background: document.querySelector('.background-scene')
         };
-
-        this.gifs = {
-            sleeping: "./cats-sleeping.gif",
-            alert: "./cat-really.gif",
-            angry: "./angry cat.gif"
-        };
-
-        this.currentState = 'sleeping';
-        this.isDisturbed = false;
-        this.disturbedTimeout = null;
-        this.lastNoiseLevel = 0;
 
         this.init();
     }
 
     init() {
-        this.renderCharacter();
+        this.loadData();
         this.setupEventListeners();
-        this.updateSensitivity();
+        this.renderCharacter();
+        this.updateStarDisplay();
+        this.updateTheme();
+        this.renderCharacterGrid();
+
+        // Initial background
+        const char = this.getCharacter(this.activeCharId);
+        this.el.background.style.backgroundImage = `url('${char.assets.bg}')`;
+        this.el.background.classList.add('dynamic-bg');
     }
 
-    renderCharacter() {
-        const catHtml = `
-            <div class="cat-wrapper" id="cat-wrapper">
-                <img id="cat-character" src="${this.gifs.sleeping}" alt="Sleeping Fat Cat" class="breathing">
-                <div id="aura-overlay" class="aura-glow"></div>
-            </div>
-        `;
-        this.elements.catContainer.innerHTML = catHtml;
+    getCharacter(id) {
+        return this.characters.find(c => c.id === id);
     }
 
     setupEventListeners() {
-        this.elements.sensitivity.addEventListener('input', () => this.updateSensitivity());
-
-        document.body.addEventListener('click', () => {
-            if (!this.isRunning) {
-                this.startSession();
-            }
+        this.el.sensitivity.addEventListener('input', () => {
+            const val = parseInt(this.el.sensitivity.value);
+            this.noiseThreshold = (100 - val) / 100 * 255;
         });
-    }
 
-    updateSensitivity() {
-        const val = parseInt(this.elements.sensitivity.value);
-        this.noiseThreshold = (100 - val) / 100 * 255;
+        // Start Audio on click
+        document.body.addEventListener('click', () => {
+            if (!this.isRunning) this.startSession();
+        }, {
+            once: true
+        });
+
+        // Modal
+        this.el.characterSelectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openModal();
+        });
+
+        this.el.closeModal.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.closeModal();
+        });
     }
 
     async startSession() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true
+            });
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.analyser = this.audioContext.createAnalyser();
             this.microphone = this.audioContext.createMediaStreamSource(stream);
-
             this.analyser.fftSize = 256;
             this.microphone.connect(this.analyser);
-
             this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
             this.isRunning = true;
             this.startTime = Date.now();
-            this.elements.infoMessage.textContent = "Shh... the fat cat is dreaming.";
+            this.el.infoMessage.textContent = "Keep it quiet to earn stars!";
 
-            this.startTimer();
-            this.monitorNoise();
+            this.startLoop();
         } catch (err) {
-            console.error("Microphone access denied:", err);
-            this.elements.infoMessage.textContent = "Please enable microphone access to start.";
+            console.error("Mic denied:", err);
+            this.el.infoMessage.textContent = "Microphone access is needed.";
         }
     }
 
-    startTimer() {
-        this.timerInterval = setInterval(() => {
-            this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000);
-            this.updateTimerDisplay();
-            this.checkMilestones();
-            this.updateProgressBar();
-        }, 1000);
+    startLoop() {
+        const loop = () => {
+            if (!this.isRunning) return;
+
+            this.updateTimer();
+            this.monitorNoise();
+            this.handleEconomy();
+
+            requestAnimationFrame(loop);
+        };
+        loop();
     }
 
-    updateTimerDisplay() {
-        const h = Math.floor(this.elapsedTime / 3600).toString().padStart(2, '0');
-        const m = Math.floor((this.elapsedTime % 3600) / 60).toString().padStart(2, '0');
-        const s = (this.elapsedTime % 60).toString().padStart(2, '0');
-        this.elements.timer.textContent = `${h}:${m}:${s}`;
+    updateTimer() {
+        const now = Date.now();
+        const diff = Math.floor((now - this.startTime) / 1000);
+        this.elapsedTime = diff;
+
+        const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+        const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+        const s = (diff % 60).toString().padStart(2, '0');
+        this.el.timer.textContent = `${h}:${m}:${s}`;
     }
 
     monitorNoise() {
-        if (!this.isRunning) return;
-
         this.analyser.getByteFrequencyData(this.dataArray);
-        let average = 0;
-        for (let i = 0; i < this.dataArray.length; i++) {
-            average += this.dataArray[i];
-        }
-        average /= this.dataArray.length;
-        this.lastNoiseLevel = average;
+        let sum = 0;
+        for (let i = 0; i < this.dataArray.length; i++) sum += this.dataArray[i];
+        const average = sum / this.dataArray.length;
 
-        if (average > this.noiseThreshold) {
-            this.handleNoiseInterruption(average);
+        // Visual Noise Bar
+        const percentage = Math.min((average / 255) * 100 * 3, 100); // Amplify for visibility
+        this.el.noiseBarFill.style.width = `${percentage}%`;
+
+        // Logic
+        if (average > this.noiseThreshold * 1.5) {
+            this.triggerState('angry');
+            this.quietTime = 0; // Reset quiet streak
+        } else if (average > this.noiseThreshold) {
+            this.triggerState('alert');
+            this.quietTime = 0;
         } else {
-            if (!this.isDisturbed) {
-                this.updateCatState('sleeping');
+            if (this.state !== 'sleep' && !this.disturbedTimeout) {
+                this.triggerState('sleep');
             }
         }
-
-        this.animationId = requestAnimationFrame(() => this.monitorNoise());
     }
 
-    handleNoiseInterruption(level) {
-        // Escalation: High noise triggers "angry" immediately, moderate noise triggers "alert/really"
-        const isSevere = level > (this.noiseThreshold * 1.5);
+    triggerState(newState) {
+        if (this.state === newState) return;
 
-        if (isSevere) {
-            this.triggerStateUpdate('angry', "NOW YOU'VE DONE IT! HE'S ANGRY!");
-        } else {
-            this.triggerStateUpdate('alert', "Really? Do you have to be so loud?");
+        // If currently angry/alert, don't go back to sleep immediately unless timeout done
+        if ((this.state === 'angry' || this.state === 'alert') && newState === 'sleep') {
+            if (!this.disturbedTimeout) {
+                this.disturbedTimeout = setTimeout(() => {
+                    this.state = 'sleep';
+                    this.renderCharacter();
+                    this.disturbedTimeout = null;
+                }, 3000); // Stay alert/angry for 3s
+            }
+            return;
         }
 
-        this.resetTimer();
+        // Interrupt timeout if getting angrier
+        if (this.disturbedTimeout && (newState === 'angry' || newState === 'alert')) {
+            clearTimeout(this.disturbedTimeout);
+            this.disturbedTimeout = null;
+        }
+
+        this.state = newState;
+        this.renderCharacter();
+
+        if (newState === 'angry') {
+            this.el.infoMessage.innerHTML = "<span style='color: #ff4d4d'>TOO LOUD!</span>";
+        } else if (newState === 'alert') {
+            this.el.infoMessage.textContent = "Shh...";
+        } else {
+            this.el.infoMessage.textContent = "Earning stars...";
+        }
     }
 
-    triggerStateUpdate(state, message) {
-        if (this.currentState === state && this.isDisturbed) return;
-
-        this.isDisturbed = true;
-        this.currentState = state;
-        this.updateCatState(state);
-        this.elements.infoMessage.textContent = message;
-
-        if (this.disturbedTimeout) clearTimeout(this.disturbedTimeout);
-
-        const duration = state === 'angry' ? 6000 : 4000;
-
-        this.disturbedTimeout = setTimeout(() => {
-            this.isDisturbed = false;
-            this.currentState = 'sleeping';
-            this.updateCatState('sleeping');
-            this.elements.infoMessage.textContent = "Shh... the fat cat is dreaming.";
-        }, duration);
-    }
-
-    resetTimer() {
-        this.startTime = Date.now();
-        this.elapsedTime = 0;
-        this.updateTimerDisplay();
-        this.updateProgressBar();
-    }
-
-    updateProgressBar() {
-        const maxTime = 1200; // 20 mins
-        const percentage = Math.min((this.elapsedTime / maxTime) * 100, 100);
-        this.elements.progressFill.style.width = `${percentage}%`;
-    }
-
-    checkMilestones() {
-        this.milestones.forEach(m => {
-            if (this.elapsedTime >= m.time && !m.reached) {
-                m.reached = true;
-                this.triggerMilestone(m.id);
+    handleEconomy() {
+        if (this.state === 'sleep') {
+            this.quietTime++;
+            // Earn a star every 600 frames (~10 seconds at 60fps)
+            if (this.quietTime % 600 === 0) {
+                this.addStar();
             }
+        }
+    }
+
+    addStar() {
+        this.stars++;
+        this.saveData();
+        this.updateStarDisplay();
+
+        // Floating +1 animation
+        const float = document.createElement('div');
+        float.textContent = "+1 ★";
+        float.style.position = 'absolute';
+        float.style.color = '#ffd700';
+        float.style.fontSize = '2rem';
+        float.style.fontWeight = 'bold';
+        float.style.left = '50%';
+        float.style.top = '20%';
+        float.style.animation = 'float-up 1s ease-out forwards';
+        document.body.appendChild(float);
+        setTimeout(() => float.remove(), 1000);
+    }
+
+    renderCharacter() {
+        const char = this.getCharacter(this.activeCharId);
+        const asset = char.assets[this.state];
+
+        const html = `
+            <div class="cat-wrapper" id="cat-wrapper">
+                <img id="cat-character" src="${asset}" alt="${char.name} ${this.state}" class="${this.state === 'sleep' ? 'breathing' : ''}">
+            </div>
+        `;
+        this.el.catContainer.innerHTML = html;
+
+        // Apply shaking effect if angry
+        const img = document.getElementById('cat-character');
+        if (this.state === 'angry') {
+            img.style.animation = 'shake 0.5s infinite';
+        }
+    }
+
+    updateTheme() {
+        const char = this.getCharacter(this.activeCharId);
+        document.body.className = char.theme;
+        this.el.background.style.backgroundImage = `url('${char.assets.bg}')`;
+    }
+
+    // --- Modal & Grid ---
+
+    renderCharacterGrid() {
+        this.el.characterGrid.innerHTML = '';
+        this.characters.forEach(c => {
+            const card = document.createElement('div');
+            card.className = `char-card ${c.id === this.activeCharId ? 'active' : ''} ${!c.unlocked ? 'locked' : ''}`;
+            card.onclick = () => this.selectCharacter(c.id);
+
+            card.innerHTML = `
+                <img src="${c.assets.sleep}" class="char-img">
+                <div class="char-info">
+                    <h3>${c.name}</h3>
+                    ${!c.unlocked ? `<div class="char-cost">⭐ ${c.cost}</div>` : '<div class="char-cost">Owned</div>'}
+                </div>
+                <div class="lock-icon">🔒</div>
+            `;
+            this.el.characterGrid.appendChild(card);
         });
     }
 
-    triggerMilestone(id) {
-        console.log(`Milestone reached: ${id}`);
-        const marker = Array.from(document.querySelectorAll('.marker')).find(m => {
-            const milestone = this.milestones.find(ms => ms.id === id);
-            return m.dataset.time == (milestone ? milestone.time : null);
-        });
-        if (marker) marker.classList.add('reached');
+    selectCharacter(id) {
+        const char = this.getCharacter(id);
 
-        this.triggerConfetti();
-        this.playSound('milestone');
-
-        if (id === 'pillow') {
-            this.elements.pillow.classList.remove('hidden');
-            this.elements.pillow.classList.add('visible');
-        } else if (id === 'sunbeam') {
-            document.getElementById('sunbeam').style.opacity = '1';
-            this.createParticles(30, 'light');
-        } else if (id === 'yarn') {
-            this.elements.yarn.classList.remove('hidden');
-            this.elements.yarn.classList.add('visible');
-        } else if (id === 'aura') {
-            const aura = document.getElementById('aura-overlay');
-            if (aura) aura.style.opacity = '1';
-            this.elements.catContainer.classList.add('zen-master');
-            this.createParticles(50, 'gold');
-            this.playSound('purr'); // Zen master purr
+        if (!char.unlocked) {
+            if (this.stars >= char.cost) {
+                if (confirm(`Unlock ${char.name} for ${char.cost} stars?`)) {
+                    this.stars -= char.cost;
+                    char.unlocked = true;
+                    this.saveData();
+                    this.updateStarDisplay();
+                    this.renderCharacterGrid();
+                }
+            } else {
+                alert(`You need ${char.cost} stars to unlock ${char.name}!`);
+            }
+            return;
         }
+
+        this.activeCharId = id;
+        this.saveData();
+        this.updateTheme();
+        this.renderCharacter();
+        this.renderCharacterGrid();
+        this.closeModal();
     }
 
-    triggerConfetti() {
-        const container = document.getElementById('particles');
-        const colors = ['#FFD700', '#FF69B4', '#00CED1', '#ADFF2F', '#FF4500'];
-
-        for (let i = 0; i < 50; i++) {
-            const c = document.createElement('div');
-            c.className = 'confetti';
-            c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            c.style.left = `${Math.random() * 100}%`;
-            c.style.top = `-20px`;
-            c.style.setProperty('--duration', `${Math.random() * 2 + 1}s`);
-            c.style.setProperty('--drift', `${Math.random() * 200 - 100}px`);
-            c.style.setProperty('--rotation', `${Math.random() * 360}deg`);
-            container.appendChild(c);
-
-            setTimeout(() => {
-                if (c.parentNode) c.parentNode.removeChild(c);
-            }, 3000);
-        }
+    openModal() {
+        this.el.modal.classList.remove('hidden');
+        this.renderCharacterGrid();
     }
 
-    playSound(type) {
-        if (!this.audioContext) return;
-
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
-
-        const now = this.audioContext.currentTime;
-
-        if (type === 'milestone') {
-            // Happy chime
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(523.25, now); // C5
-            osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3); // C6
-            gain.gain.setValueAtTime(0, now);
-            gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-            osc.start(now);
-            osc.stop(now + 0.5);
-        } else if (type === 'purr') {
-            // Low frequency vibration-like sound
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(60, now);
-            // Modulation to simulate purring
-            const mod = this.audioContext.createOscillator();
-            const modGain = this.audioContext.createGain();
-            mod.frequency.value = 4; // 4Hz heartbeat/purr frequency
-            modGain.gain.value = 20;
-            mod.connect(modGain);
-            modGain.connect(osc.frequency);
-
-            gain.gain.setValueAtTime(0, now);
-            gain.gain.linearRampToValueAtTime(0.1, now + 1);
-            gain.gain.linearRampToValueAtTime(0, now + 4);
-
-            mod.start(now);
-            osc.start(now);
-            mod.stop(now + 4);
-            osc.stop(now + 4);
-        } else if (type === 'start') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(440, now); // A4
-            gain.gain.setValueAtTime(0, now);
-            gain.gain.linearRampToValueAtTime(0.1, now + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-            osc.start(now);
-            osc.stop(now + 0.5);
-        }
+    closeModal() {
+        this.el.modal.classList.add('hidden');
     }
 
-    createParticles(count = 20, type = 'default') {
-        const container = document.getElementById('particles');
-        const colors = type === 'gold' ? ['#ffd700', '#ffec8b', '#ffffff'] : ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.2)'];
-
-        for (let i = 0; i < count; i++) {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            const size = Math.random() * 4 + 2;
-            p.style.width = `${size}px`;
-            p.style.height = `${size}px`;
-            p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-
-            if (type === 'gold') {
-                p.style.boxShadow = `0 0 ${size * 2}px ${p.style.backgroundColor}`;
-            }
-
-            p.style.left = `${Math.random() * 100}%`;
-            p.style.setProperty('--duration', `${Math.random() * 4 + 4}s`);
-            p.style.setProperty('--drift', `${Math.random() * 100 - 50}px`);
-            p.style.animationDelay = `${Math.random() * 2}s`;
-            container.appendChild(p);
-
-            setTimeout(() => {
-                if (p.parentNode) p.parentNode.removeChild(p);
-            }, 8000);
-        }
+    updateStarDisplay() {
+        this.el.starCount.textContent = this.stars;
     }
 
-    updateCatState(state) {
-        const catImg = document.getElementById('cat-character');
-        const catWrapper = document.getElementById('cat-wrapper');
-        if (!catImg || !catWrapper) return;
+    // --- Persistence ---
 
-        if (state === 'sleeping' && !this.isDisturbed) {
-            if (!catImg.src.includes('cats-sleeping')) {
-                catImg.src = this.gifs.sleeping;
-            }
-            catImg.classList.add('breathing');
-            catWrapper.style.transform = 'none';
-            catImg.style.filter = 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))';
-        } else if (state === 'alert') {
-            if (!catImg.src.includes('really')) {
-                catImg.src = this.gifs.alert;
-            }
-            catImg.classList.remove('breathing');
-            catWrapper.style.transform = `scale(1.05) rotate(${Math.random() * 4 - 2}deg)`;
-            catImg.style.filter = 'drop-shadow(0 10px 30px rgba(255, 100, 100, 0.4)) contrast(1.1)';
-        } else if (state === 'angry') {
-            if (!catImg.src.includes('angry')) {
-                catImg.src = this.gifs.angry;
-            }
-            catImg.classList.remove('breathing');
-            // Violent shake for angry state
-            const shakeX = Math.random() * 20 - 10;
-            const shakeY = Math.random() * 10 - 5;
-            catWrapper.style.transform = `scale(1.2) translate(${shakeX}px, ${shakeY}px) rotate(${Math.random() * 10 - 5}deg)`;
-            catImg.style.filter = 'drop-shadow(0 0 40px rgba(255, 0, 0, 0.6)) contrast(1.3) saturate(1.5)';
+    saveData() {
+        const data = {
+            stars: this.stars,
+            unlocked: this.characters.filter(c => c.unlocked).map(c => c.id),
+            activeCharId: this.activeCharId
+        };
+        localStorage.setItem('zenGuardiansData', JSON.stringify(data));
+    }
 
-            // Background red flash
-            document.body.style.backgroundColor = 'rgba(255,0,0,0.05)';
-            setTimeout(() => document.body.style.backgroundColor = '', 200);
+    loadData() {
+        const json = localStorage.getItem('zenGuardiansData');
+        if (json) {
+            const data = JSON.parse(json);
+            this.stars = data.stars || 0;
+            this.activeCharId = data.activeCharId || 'cat';
+
+            if (data.unlocked) {
+                data.unlocked.forEach(id => {
+                    const char = this.getCharacter(id);
+                    if (char) char.unlocked = true;
+                });
+            }
         }
     }
 }
 
-// Initialize
+// Global Init
 window.addEventListener('load', () => {
-    new ZenGingerCat();
+    // Add Shake Animation Style dynamically
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    new ZenGuardians();
 });

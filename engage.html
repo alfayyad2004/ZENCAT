@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Quest: The Quiet Rocket</title>
+    <link rel="stylesheet" href="engage-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <div class="top-bar">
+                <div class="stat-box">
+                    <span class="label">DISTANCE</span>
+                    <span class="value" id="score">000000</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">HIGH SCORE</span>
+                    <span class="value" id="high-score">000000</span>
+                </div>
+            </div>
+
+            <div class="fuel-container">
+                <span class="label">FUEL</span>
+                <div class="fuel-bar-bg">
+                    <div class="fuel-bar-fill" id="fuel-fill"></div>
+                </div>
+            </div>
+
+            <div class="message-overlay" id="start-screen">
+                <h1>SPACE QUEST</h1>
+                <p>MISSION: KEEP QUIET TO FUEL THE ROCKET</p>
+                <div class="blink">CLICK TO LAUNCH</div>
+            </div>
+
+            <div class="message-overlay hidden" id="game-over-screen">
+                <h1 style="color: #ff5555;">TURBULENCE DETECTED!</h1>
+                <p>TOO MUCH NOISE DESTABILIZED THE SHIP</p>
+                <div class="blink">CLICK TO RETRY</div>
+            </div>
+        </div>
+        <div class="scanlines"></div>
+    </div>
+
+    <div class="controls">
+        <button id="back-btn" onclick="window.location.href='index.html'">EXIT MISSION</button>
+        <div class="sensitivity-control">
+            <label>MIC SENSITIVITY</label>
+            <input type="range" id="sensitivity" min="0" max="100" value="50">
+        </div>
+    </div>
+
+    <script src="engage-app.js"></script>
+</body>
+
+</html>

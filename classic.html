@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zen Ginger Cat | Noise Management</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Zen Ginger Cat | Classic</title>
+    <link rel="stylesheet" href="classic-style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
@@ -22,34 +22,15 @@
         </div>
 
         <header>
-            <div class="header-content">
-                <div class="logo">Zen Guardians</div>
-                <div class="star-counter" id="star-counter">
-                    <span class="star-icon">★</span>
-                    <span id="star-count">0</span>
-                </div>
-                <button id="character-select-btn" class="icon-btn" title="Change Guardian">
-                    👥
-                </button>
-                <div style="display: flex; gap: 5px; margin-left:10px;">
-                    <a href="classic.html" class="nav-btn">Classic</a>
-                    <a href="engage.html" class="nav-btn">RPG</a>
-                    <a href="math-race.html" class="nav-btn">Race</a>
-                </div>
-            </div>
+            <div class="logo">Zen Ginger Cat (Classic)</div>
+            <a href="index.html"
+                style="color: white; text-decoration: none; border: 1px solid white; padding: 5px 10px; border-radius: 5px; margin-left: 20px;">Go
+                to Zen Guardians 3D</a>
         </header>
 
         <main>
             <div class="status-panel glass">
                 <div class="timer-display" id="timer">00:00:00</div>
-
-                <div class="noise-meter-container">
-                    <div class="noise-label">Noise Level</div>
-                    <div class="noise-bar-bg">
-                        <div class="noise-bar-fill" id="noise-bar-fill"></div>
-                    </div>
-                </div>
-
                 <div class="sensitivity-control">
                     <label for="sensitivity">Sensitivity</label>
                     <input type="range" id="sensitivity" min="0" max="100" value="50">
@@ -81,19 +62,6 @@
             <div class="info-message" id="info-message">
                 Tap anywhere to start the session & enable microphone
             </div>
-
-            <!-- Character Select Modal -->
-            <div id="character-modal" class="modal hidden">
-                <div class="modal-content glass">
-                    <div class="modal-header">
-                        <h2>Choose Your Guardian</h2>
-                        <button class="close-modal">&times;</button>
-                    </div>
-                    <div class="character-grid" id="character-grid">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-            </div>
         </main>
 
         <div class="progress-container glass">
@@ -108,7 +76,7 @@
             </div>
         </div>
     </div>
-    <script src="app.js"></script>
+    <script src="classic-app.js"></script>
 </body>
 
 </html>
